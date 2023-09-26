@@ -1,48 +1,44 @@
-import { useState } from "react";
-import { tempMovieData } from "./data";
-import { tempWatchedData } from "./data";
+import { useEffect, useState } from "react";
+import StarRating from "./StarRating";
+import { Loading } from "./Loading";
 
 const average = arr =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
-export default function Main() {
-  const [movies, setMovies] = useState(tempMovieData);
-  const [watched, setWatched] = useState(tempWatchedData);
-  const [isOpen1, setIsOpen1] = useState(true);
-  const [isOpen2, setIsOpen2] = useState(true);
-
-  return (
-    <main className="main">
-      <ListBox isOpen1={isOpen1} setIsOpen1={setIsOpen1} movies={movies} />
-      <WatchedBox isOpen2={isOpen2} setIsOpen2={setIsOpen2} watched={watched} />
-    </main>
-  );
+export default function Main({ children }) {
+  return <main className="main">{children}</main>;
 }
 
-function ListBox({ isOpen1, setIsOpen1, movies }) {
+export function Box({ children }) {
+  const [isOpen, setIsOpen] = useState(true);
+
   return (
     <div className="box">
-      <button className="btn-toggle" onClick={() => setIsOpen1(open => !open)}>
-        {isOpen1 ? "–" : "+"}
+      <button className="btn-toggle" onClick={() => setIsOpen(open => !open)}>
+        {isOpen ? "–" : "+"}
       </button>
-      {isOpen1 && <MoviesList movies={movies} />}
+      {isOpen && children}
     </div>
   );
 }
 
-function MoviesList({ movies }) {
+export function MoviesList({ movies, onSelectedMovie }) {
   return (
-    <ul className="list">
+    <ul className="list list-movies">
       {movies?.map(movie => (
-        <Movie movie={movie} key={movie.imdbID} />
+        <Movie
+          movie={movie}
+          key={movie.imdbID}
+          onSelectedMovie={onSelectedMovie}
+        />
       ))}
     </ul>
   );
 }
 
-function Movie({ movie }) {
+function Movie({ movie, onSelectedMovie }) {
   return (
-    <li>
+    <li onClick={() => onSelectedMovie(movie.imdbID)}>
       <img src={movie.Poster} alt={`${movie.Title} poster`} />
       <h3>{movie.Title}</h3>
       <div>
@@ -55,23 +51,7 @@ function Movie({ movie }) {
   );
 }
 
-function WatchedBox({ isOpen2, setIsOpen2, watched }) {
-  return (
-    <div className="box">
-      <button className="btn-toggle" onClick={() => setIsOpen2(open => !open)}>
-        {isOpen2 ? "–" : "+"}
-      </button>
-      {isOpen2 && (
-        <>
-          <WatchedMovieSummary watched={watched} />
-          <WatchedMovieList watched={watched} />
-        </>
-      )}
-    </div>
-  );
-}
-
-function WatchedMovieSummary({ watched }) {
+export function WatchedMovieSummary({ watched }) {
   const avgImdbRating = average(watched.map(movie => movie.imdbRating));
   const avgUserRating = average(watched.map(movie => movie.userRating));
   const avgRuntime = average(watched.map(movie => movie.runtime));
@@ -101,7 +81,7 @@ function WatchedMovieSummary({ watched }) {
   );
 }
 
-function WatchedMovieList({ watched }) {
+export function WatchedMovieList({ watched }) {
   return (
     <ul className="list">
       {watched.map(movie => (
@@ -131,5 +111,72 @@ function WatchedMovie({ movie }) {
         </p>
       </div>
     </li>
+  );
+}
+
+export function MovieDetails({ selectedId, onClose, KEY, setDetailsLoading }) {
+  const [movie, setMovie] = useState({});
+
+  console.log(movie);
+  const {
+    Title: title,
+    Year: year,
+    Poster: poster,
+    Runtime: runtime,
+    imdbRating,
+    Plot: plot,
+    Released: released,
+    Actors: actors,
+    Director: director,
+    Genre: genre,
+  } = movie;
+
+  useEffect(
+    function () {
+      async function fetchDetail() {
+        setDetailsLoading(true);
+        const res = await fetch(
+          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
+        );
+        const data = await res.json();
+
+        setMovie(data);
+        setDetailsLoading(false);
+      }
+      fetchDetail();
+    },
+    [selectedId]
+  );
+
+  return (
+    <div className="details">
+      <header>
+        <button className="btn-back" onClick={onClose}>
+          &#8592;
+        </button>
+        <img src={poster} alt={`This is a poster of ${title}`} />
+        <div className="details-overview">
+          <h2>{title}</h2>
+          <p>
+            {released}&bull;{runtime}
+          </p>
+          <p>
+            <span>⭐</span>
+            {imdbRating} IMDb Rating
+          </p>
+        </div>
+      </header>
+      <section>
+        <div className="rating">
+          <StarRating maxRating={10} size="24" />
+        </div>
+        <p>
+          <em>{plot}</em>
+        </p>
+        <p>Starring: {actors}</p>
+        <p>Directed by: {director}</p>
+        <p>Genre: {genre}</p>
+      </section>
+    </div>
   );
 }
