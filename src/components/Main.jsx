@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import StarRating from "./StarRating";
 import { Loading } from "./Loading";
 
@@ -134,7 +134,7 @@ export function MovieDetails({
   const [movie, setMovie] = useState({});
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [userStarRating, setUserStarRating] = useState("");
-  const apiKey = KEY;
+  const countOfUserRating = useRef("");
 
   const isWatched = watchedList.map(movie => movie.imdbId).includes(selectedId);
   const watchedUserRating = watchedList.find(
@@ -162,10 +162,19 @@ export function MovieDetails({
       imdbRating: Number(imdbRating),
       runtime: runtime.split(" ").at(0),
       userRating: userStarRating,
+      countOfRating: countOfUserRating.current,
     };
     onWatchedList(newMovie);
     onClose();
   }
+
+  useEffect(
+    function () {
+      if (userStarRating)
+        countOfUserRating.current = Number(countOfUserRating.current) + 1;
+    },
+    [userStarRating]
+  );
 
   useEffect(
     function () {
@@ -188,7 +197,7 @@ export function MovieDetails({
       async function fetchDetail() {
         setDetailsLoading(true);
         const res = await fetch(
-          `http://www.omdbapi.com/?apikey=${apiKey}&i=${selectedId}`
+          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
         );
         const data = await res.json();
 
@@ -198,9 +207,11 @@ export function MovieDetails({
       }
       fetchDetail();
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedId]
+    [selectedId, KEY]
   );
+
+  /* +++++++++++++++Rename the Title of the Website++++++++++++ */
+
   useEffect(() => {
     document.title = `Movie | ${title}`;
     return () => {
