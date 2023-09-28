@@ -16,36 +16,46 @@ export default function App() {
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [query, setQuery] = useState("inception");
+  const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
-  const [detailsLoading, setDetailsLoading] = useState(false);
 
   function handleSelectMovie(id) {
-    id === selectedId ? setSelectedId(null) : setSelectedId(id);
+    setSelectedId(id === selectedId ? null : id);
   }
 
   function handleClose(id) {
     setSelectedId(null);
   }
+
+  function handleWatchedList(movie) {
+    setWatched(watched => [...watched, movie]);
+  }
+
+  function handleDeleteMovie(id) {
+    setWatched(watched => watched.filter(movies => movies.imdbId !== id));
+  }
+
   useEffect(
     function () {
+      const controller = new AbortController();
       async function fetchMovies() {
         try {
           setIsLoading(true);
           setError("");
           const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+            { signal: controller.signal }
           );
 
           if (!res.ok)
             throw new Error("Something went wrong while fetching movies");
 
           const data = await res.json();
-
           if (data.Response === "False") throw new Error("Movie not found");
           setMovies(data.Search);
+          setError("");
         } catch (err) {
-          setError(err.message);
+          if (err.name !== "AbortError") setError(err.message);
         } finally {
           setIsLoading(false);
         }
@@ -55,7 +65,11 @@ export default function App() {
         setMovies([]);
         return;
       }
+      handleClose();
       fetchMovies();
+      return () => {
+        controller.abort();
+      };
     },
     [query]
   );
@@ -81,12 +95,16 @@ export default function App() {
               selectedId={selectedId}
               onClose={handleClose}
               KEY={KEY}
-              setDetailsLoading={setDetailsLoading}
+              onWatchedList={handleWatchedList}
+              watchedList={watched}
             />
           ) : (
             <>
               <WatchedMovieSummary watched={watched} />
-              <WatchedMovieList watched={watched} />
+              <WatchedMovieList
+                watched={watched}
+                onDeleteMovie={handleDeleteMovie}
+              />
             </>
           )}
         </Box>
