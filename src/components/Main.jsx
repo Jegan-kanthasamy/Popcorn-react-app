@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import StarRating from "./StarRating";
 import { Loading } from "./Loading";
 
-import "./index.css";
-
 const average = arr =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
