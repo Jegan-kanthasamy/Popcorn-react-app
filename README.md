@@ -17,3 +17,6 @@ Popcorn is a React web application that allows you to search for movies and view
 ##  Credit
 
 This app was created while following "The Ultimate React Course 2023: React, Redux & More" by Jonas Schmedtmann. I would like to express my gratitude to Jonas for his excellent course.
+
+
+[Popcorn.webm](https://github.com/Jegan-kanthasamy/Popcorn-react-app/assets/116385792/3dba8865-6f85-4c7a-8537-bcf96fd7321a)
