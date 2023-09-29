@@ -9,16 +9,14 @@ import Main, {
 } from "./Main";
 import { Loading } from "./Loading";
 import { useMovie } from "./useMovie";
+import { useLocalStorageState } from "./useLocalStoreageState";
 
 const KEY = "25162b48";
 
 export default function App() {
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
-  const [watched, setWatched] = useState(function () {
-    const store = localStorage.getItem("watched");
-    return JSON.parse(store);
-  });
+  const [watched, setWatched] = useLocalStorageState([], "watched");
 
   const { movies, isLoading, error } = useMovie(query);
 
@@ -37,13 +35,6 @@ export default function App() {
   function handleDeleteMovie(id) {
     setWatched(watched => watched.filter(movies => movies.imdbId !== id));
   }
-
-  useEffect(
-    function () {
-      localStorage.setItem("watched", JSON.stringify(watched));
-    },
-    [watched]
-  );
 
   return (
     <>
